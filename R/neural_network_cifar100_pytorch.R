@@ -1,58 +1,14 @@
 # Un exemple de réseau avec pytorch ####
 
 ## A. Chargement des images à partir de la base CIFAR-100 ####
+data <- keras::dataset_cifar100()
 
-# importation des images
-meubles <- keras::dataset_cifar100()
+# On retient les chaises et les lits. 
+chairs_beds <- get_chairs_beds(data)
+df_train <- chairs_beds$Train
+df_test <- chairs_beds$Test
 
-get_images <- function(categorie, ech = "train") {
-  # selection des images
-  if (ech == "train") {
-    images <- meubles$train$x[meubles$train$y == categorie, , , ]
-  } else {
-    images <- meubles$test$x[meubles$test$y == categorie, , , ]
-  }
-
-  # conversion des images en niveaux de gris
-  grayscale <- 0.298936 * images[, , , 1] + 0.587043 * images[, , , 2] + 0.114021 * images[, , , 3]
-  grayscale <- apply(grayscale, c(1, 2, 3), "as.integer")
-
-
-  # affichage des images pour vérification
-  par(mfcol = c(5, 5))
-  par(mar = c(0, 0, 4, 1), xaxs = "i", yaxs = "i")
-
-  for (i in 1:25) {
-    image(1:32, 1:32, grayscale[i, , ], col = gray((0:255) / 255))
-  }
-
-  # conversion en data.frame (1 ligne par image)
-  grayscale <- data.frame(keras::array_reshape(grayscale, dim = c(dim(grayscale)[1], 32 * 32)))
-  # grayscale <- apply(grayscale,2,"as.integer")
-
-  grayscale["type"] <- categorie
-
-  return(grayscale)
-}
-
-# importation de l'échantillon d'entrainement
-beds <- get_images("5", ech = "train")
-lits <- get_images("20", ech = "train")
-df_train <- rbind(beds, lits)
-
-# importation de l'échantillon de test
-beds <- get_images("5", ech = "test")
-lits <- get_images("20", ech = "test")
-df_test <- rbind(beds, lits)
-
-# fonction de normalisation des données
-normalise <- function(x) {
-  x <- as.numeric(x)
-  x <- (x - 0) / 255
-}
-
-df_train[, 1:(ncol(df_train) - 1)] <- apply(df_train[, 1:(ncol(df_train) - 1)], c(1, 2), "normalise")
-df_test[, 1:(ncol(df_test) - 1)] <- apply(df_test[, 1:(ncol(df_test) - 1)], c(1, 2), "normalise")
+head(df_train[, c(1:10, ncol(df_train))], 2)
 
 
 # ## B.a Lancement d'un réseau de neurones avec pytorch
@@ -78,9 +34,6 @@ x_test <- torch::torch_tensor(x_test, dtype = torch::torch_float())
 y_test <- torch::torch_tensor(y_test, dtype = torch::torch_long())
 
 #### Définition du modèle
-# cette ligne sert à vérifier si l'usage de GPU est possible
-# dans cet exemple, cela n'est pas le cas.
-torch::cuda_is_available()
 
 net <- torch::nn_module(
   "class_net",
@@ -310,7 +263,7 @@ grid_hidden <- seq(10, 200, 10)
 
 for (cc in grid_hidden) {
   print(cc)
-  write.csv(cc, "test.csv")
+  write.csv(cc, "data/test.csv")
   # initialisation du modele
   model <- net(cc)
   optimizer <- torch::optim_adam(model$parameters)
@@ -348,21 +301,21 @@ for (cc in grid_hidden) {
   winners <- ifelse(y_pred > 0.5, 1, 0)
   corrects <- (winners == (y_train - 1))
   accuracy <- corrects$sum()$item() / y_train$size()
-  write(accuracy, "train_pytorch.txt", append = TRUE)
+  write(accuracy, "data/train_pytorch.txt", append = TRUE)
   acc_train <- c(acc_train, accuracy)
 
   y_pred <- model(x_test)
   winners <- ifelse(y_pred > 0.5, 1, 0)
   corrects <- (winners == (y_test - 1))
   accuracy <- corrects$sum()$item() / y_test$size()
-  write(accuracy, "test_pytorch.txt", append = TRUE)
+  write(accuracy, "data/test_pytorch.txt", append = TRUE)
   acc_test <- c(acc_test, accuracy)
 }
 
 
 # Pour un nouvel export des précisions :
-write.csv(acc_test, "test_pytorch.txt", row.names = FALSE)
-write.csv(acc_train, "train_pytorch.txt", row.names = FALSE)
+write.csv(acc_test, "data/test_pytorch.txt", row.names = FALSE)
+write.csv(acc_train, "data/train_pytorch.txt", row.names = FALSE)
 
 #
 # #### Tracé des résultats sur les échantillons test et d'entraînement
@@ -391,14 +344,7 @@ colnames(graph) <- c("source", "x", "y")
 graph[, 2:ncol(graph)] <- apply(graph[, 2:ncol(graph)], 2, "as.numeric")
 
 
-ggplot2::theme_set(ggplot2::theme_classic())
-
-
 # Combine into single data frame and add interpolation column
-# ggplot(graph, aes(x, y)) +
-#  geom_point(aes(colour = source)) + geom_smooth(method = "lm", formula = y ~ poly(x, 2),se = FALSE)
-# tikz("iterations_chaises.tex",width=5,height=5)
-
 ggplot2::ggplot(graph, ggplot2::aes(x = x, y = y, colour = factor(source))) +
   ggplot2::geom_point(data = subset(graph, source == "kerastest")) +
   ggplot2::geom_point(data = subset(graph, source == "kerastrain")) +
@@ -407,4 +353,5 @@ ggplot2::ggplot(graph, ggplot2::aes(x = x, y = y, colour = factor(source))) +
   ggplot2::geom_smooth(data = subset(graph, source == "kerastest"), method = "loess", formula = y ~ x, se = F) +
   ggplot2::geom_smooth(data = subset(graph, source == "kerastrain"), method = "loess", formula = y ~ x, se = F) +
   ggplot2::geom_smooth(data = subset(graph, source == "pytorchtest"), method = "loess", formula = y ~ x, se = F) +
-  ggplot2::geom_smooth(data = subset(graph, source == "pytorchtrain"), method = "loess", formula = y ~ x, se = F)
+  ggplot2::geom_smooth(data = subset(graph, source == "pytorchtrain"), method = "loess", formula = y ~ x, se = F)+
+  ggplot2::theme_classic()
