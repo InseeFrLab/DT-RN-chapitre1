@@ -2,7 +2,7 @@ FROM inseefrlab/onyxia-rstudio:ds-r4.2.3
 
 # Install packages specified in the renv.lock file
 RUN git clone https://github.com/ThomasFaria/DT-RN-chapitre1.git && \
-    cd DT_RN_chapitre1 && \
+    cd DT-RN-chapitre1 && \
     Rscript -e "renv::restore()" && \
     chown -R ${USERNAME}:${GROUPNAME} ${HOME}
     
