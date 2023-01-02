@@ -303,13 +303,13 @@ x_test = data.matrix(df_test[,1:(ncol(df_test)-1)])
 y_train = to_categorical(ifelse(df_train[,"type"]=="20",1,0))
 y_test = to_categorical(ifelse(df_test[,"type"]=="20",1,0))
 
-On estime le modèle :
+# On estime le modèle :
   history <- model %>% fit(x_train, y_train, epochs = 100, verbose = 2)
 
 # tracé des itérations 
 plot(history)
 
-Evaluation sur l'échantillon test :
+# Evaluation sur l'échantillon test :
 model %>% evaluate(x_test, y_test)
 
 
