@@ -29,7 +29,7 @@ get_images <- function(categorie,ech="train"){
   }
   
   #conversion en data.frame (1 ligne par image)
-  grayscale <- data.frame(array_reshape(grayscale,dim=c(dim(grayscale)[1],32*32)))
+  grayscale <- data.frame(keras::array_reshape(grayscale,dim=c(dim(grayscale)[1],32*32)))
   #grayscale <- apply(grayscale,2,"as.integer")
   
   grayscale["type"] <-  categorie
@@ -65,7 +65,6 @@ df_test[,1:(ncol(df_test)-1)] = apply(df_test[,1:(ncol(df_test)-1)],c(1,2),"norm
 # * `install.packages("torch")`
 # 
 # Le package peut ensuite être chargé de façon usuelle (cf. ci-dessous). Un nouveau lancement du notebook peut être nécessaire.
-library("torch")
 
 # L'estimation est réalisée sur la totalité de l'échantillon, sans batchs. Sinon, il est nécessaire d'utiliser le `dataloader` (cf. ci-dessous). Le chargement est un peu plus complexe. 
 # 2. Convert our input data to matrices and labels to vectors.
@@ -75,39 +74,39 @@ x_test = as.matrix(apply(df_test[, 1:ncol(df_test)-1],2,"as.numeric"))
 y_test = ifelse(df_test$type=="20",2,1)
 
 # 3. Convert our input data and labels into tensors.
-x_train = torch_tensor(x_train, dtype = torch_float())
-y_train = torch_tensor(y_train, dtype = torch_long())
-x_test = torch_tensor(x_test, dtype = torch_float())
-y_test = torch_tensor(y_test, dtype = torch_long())
+x_train = torch::torch_tensor(x_train, dtype = torch::torch_float())
+y_train = torch::torch_tensor(y_train, dtype = torch::torch_long())
+x_test = torch::torch_tensor(x_test, dtype = torch::torch_float())
+y_test = torch::torch_tensor(y_test, dtype = torch::torch_long())
 
 #### Définition du modèle
 # cette ligne sert à vérifier si l'usage de GPU est possible
 # dans cet exemple, cela n'est pas le cas.
-cuda_is_available()
+torch::cuda_is_available()
 
-net = nn_module(
+net = torch::nn_module(
   "class_net",
   
   initialize = function(){
     
     # première couche de neurones : 1024 valeurs en entrée et 20 en sortie 
-    self$linear1 = nn_linear(1024,150)
+    self$linear1 = torch::nn_linear(1024,150)
     # deuxième couche de neurones : 20 valeurs en entrée et 2 sorties
-    self$linear2 = nn_linear(150,2)
+    self$linear2 = torch::nn_linear(150,2)
     
   },
   
   forward = function(x){
     
-    x %>%
+    x |>
       # 1ere couche
-      self$linear1() %>%
+      self$linear1() |>
       # les 25 neurones ont une fonction relu
-      nnf_relu() %>%
+      torch::nnf_relu() |>
       # 2eme couche
-      self$linear2() %>%
+      self$linear2() |>
       # fonction d'activation softmax pour transformer les sorties en probas
-      nnf_softmax(2)
+      torch::nnf_softmax(2)
     
   }
   
@@ -117,8 +116,8 @@ model = net()
 
 
 # Définition de la fonction de coût et de l'algorithme à utiliser
-criterion = nn_cross_entropy_loss()  
-optimizer = optim_adam(model$parameters)
+criterion = torch::nn_cross_entropy_loss()  
+optimizer = torch::optim_adam(model$parameters)
 
 
 epochs = 200
@@ -164,11 +163,8 @@ corrects = (winners == y_train)
 accuracy = corrects$sum()$item() / y_train$size()
 print(accuracy)
 
-library(torch)
-library(dplyr)
-
 # Le chargement des données doit être effectué via une fonction, définie ci-dessous :
-images_dataset <- dataset(
+images_dataset <- torch::dataset(
   name = "images_dataset",
   
   initialize = function(indices) {
@@ -195,22 +191,22 @@ images_dataset <- dataset(
   
   prepare_images_data = function(input) {
     
-    input <- input %>%
-      mutate() 
+    input <- input |>
+      dplyr::mutate() 
     
     # mise en forme de la variable a predire
-    target_col <- ifelse(input$type=="20",1,0) %>%
-      as.numeric() %>%
+    target_col <- ifelse(input$type=="20",1,0) |>
+      as.numeric() |>
       as.matrix()
     
     # mise en forme des variables explicatives
-    numerical_cols <- input %>%
-      select(-type) %>%
+    numerical_cols <- input |>
+      dplyr::select(-type) |>
       as.matrix()
     
     
-    list(torch_tensor(numerical_cols,dtype=torch_float()),
-         torch_tensor(target_col,dtype=torch_float()))
+    list(torch::torch_tensor(numerical_cols,dtype=torch::torch_float()),
+         torch::torch_tensor(target_col,dtype=torch::torch_float()))
   }
 )
 
@@ -223,37 +219,37 @@ train_indices <- sample(1:nrow(df_train), size = floor(0.8 * nrow(df_train)))
 valid_indices <- setdiff(1:nrow(df_train), train_indices)
 
 train_ds <- images_dataset(train_indices)
-train_dl <- train_ds %>% dataloader(batch_size = 32, shuffle = TRUE)
+train_dl <- train_ds |> torch::dataloader(batch_size = 32, shuffle = TRUE)
 
 valid_ds <- images_dataset(valid_indices)
-valid_dl <- valid_ds %>% dataloader(batch_size = 32, shuffle = FALSE)
+valid_dl <- valid_ds |> torch::dataloader(batch_size = 32, shuffle = FALSE)
 
 #### Définition du modèle avec une seule sortie 
 
 
-net = nn_module(
+net = torch::nn_module(
   "class_net",
   
   initialize = function(cc){
     
     # première couche de neurones : 1024 valeurs en entrée et 20 en sortie 
-    self$linear1 = nn_linear(1024,cc)
+    self$linear1 = torch::nn_linear(1024,cc)
     # deuxième couche de neurones : 20 valeurs en entrée et 2 sorties
-    self$linear2 = nn_linear(cc,1)
+    self$linear2 = torch::nn_linear(cc,1)
     
   },
   
   forward = function(x){
     
-    x %>%
+    x |>
       # 1ere couche
-      self$linear1() %>%
+      self$linear1() |>
       # les 25 neurones ont une fonction relu
-      nnf_relu() %>%
+      torch::nnf_relu() |>
       # 2eme couche
-      self$linear2() %>%
+      self$linear2() |>
       # fonction d'activation softmax pour transformer les sorties en probas
-      nnf_sigmoid()
+      torch::nnf_sigmoid()
     
   }
   
@@ -269,7 +265,7 @@ model = net(20)
 
 
 
-optimizer <- optim_adam(model$parameters)
+optimizer <- torch::optim_adam(model$parameters)
 
 for (epoch in 1:20) {
  
@@ -279,7 +275,7 @@ for (epoch in 1:20) {
  coro::loop(for (b in train_dl) {
    optimizer$zero_grad()
    y_pred <- model(b$x[[1]])
-   loss <- nnf_binary_cross_entropy(y_pred, b$y)
+   loss <- torch::nnf_binary_cross_entropy(y_pred, b$y)
    loss$backward()
    optimizer$step()
    train_losses <- c(train_losses, loss$item())
@@ -290,7 +286,7 @@ for (epoch in 1:20) {
  
  coro::loop(for (b in valid_dl) {
    output <- model(b$x[[1]])
-   loss <- nnf_binary_cross_entropy(output, b$y)
+   loss <- torch::nnf_binary_cross_entropy(output, b$y)
    valid_losses <- c(valid_losses, loss$item())
  })
  
@@ -306,10 +302,10 @@ x_test = as.matrix(apply(df_test[, 1:ncol(df_test)-1],2,"as.numeric"))
 y_test = ifelse(df_test$type=="20",2,1)
 
 # 3. Convert our input data and labels into tensors.
-x_train = torch_tensor(x_train, dtype = torch_float())
-y_train = torch_tensor(y_train, dtype = torch_long())
-x_test = torch_tensor(x_test, dtype = torch_float())
-y_test = torch_tensor(y_test, dtype = torch_long())
+x_train = torch::torch_tensor(x_train, dtype = torch::torch_float())
+y_train = torch::torch_tensor(y_train, dtype = torch::torch_long())
+x_test = torch::torch_tensor(x_test, dtype = torch::torch_float())
+y_test = torch::torch_tensor(y_test, dtype = torch::torch_long())
 
 
 
@@ -329,17 +325,18 @@ print(accuracy)
 # 
 # Comme avec la librairie `Keras`, il est possible de rechercher le nombre de neurones de la couche cachée sur une grille de valeurs.
 
-optimizer <- optim_adam(model$parameters)
+optimizer <- torch::optim_adam(model$parameters)
 acc_train <- c()
 acc_test <- c()
+grid_hidden <- seq(10,200,10)
 
-for (cc in seq(10,200,10)){
+for (cc in grid_hidden){
   
   print(cc)
   write.csv(cc,"test.csv")
   # initialisation du modele
   model = net(cc)
-  optimizer <- optim_adam(model$parameters)
+  optimizer <- torch::optim_adam(model$parameters)
   
   # estimation sur des batchs sur le modèle
   for (epoch in 1:100) {
@@ -351,7 +348,7 @@ for (cc in seq(10,200,10)){
     coro::loop(for (b in train_dl) {
       optimizer$zero_grad()
       y_pred <- model(b$x[[1]])
-      loss <- nnf_binary_cross_entropy(y_pred, b$y)
+      loss <- torch::nnf_binary_cross_entropy(y_pred, b$y)
       loss$backward()
       optimizer$step()
       train_losses <- c(train_losses, loss$item())
@@ -362,7 +359,7 @@ for (cc in seq(10,200,10)){
     
     coro::loop(for (b in valid_dl) {
       output <- model(b$x[[1]])
-      loss <- nnf_binary_cross_entropy(output, b$y)
+      loss <- torch::nnf_binary_cross_entropy(output, b$y)
       valid_losses <- c(valid_losses, loss$item())
     })
     
@@ -401,7 +398,6 @@ write.csv(acc_train,"train_pytorch.txt",row.names=FALSE)
 # (les fichiers des résultats obtenus avec *Keras* doivent figurer dans */home/jovyan*)
 # 
 
-
 # import des résultats avec Keras
 keras_test <- read.csv("test_keras_s.txt",sep=",",header=FALSE)
 colnames(keras_test) <- c("id","keras_test")
@@ -415,16 +411,13 @@ colnames(pytorch_test) <- c("pytorch_test")
 pytorch_train <- read.csv("train_pytorch.txt",sep=",",header=TRUE)
 colnames(pytorch_train) <- c("pytorch_train")
 
-graph <- data.frame(cbind(c(rep("kerastest",20),rep("kerastrain",20),rep("pytorchtest",20),rep("pytorchtrain",20)),c(seq(10,200,10),seq(10,200,10),seq(10,200,10),seq(10,200,10)),
+graph <- data.frame(cbind(c(rep("kerastest",20),rep("kerastrain",20),rep("pytorchtest",20),rep("pytorchtrain",20)),rep(grid_hidden, 4),
                           c(keras_test$keras_test,keras_train$keras_train,pytorch_test$pytorch_test,pytorch_train$pytorch_train)))
 colnames(graph) <- c("source","x","y")
 graph[,2:ncol(graph)] <- apply(graph[,2:ncol(graph)],2,"as.numeric")
 
 
-library("tikzDevice")
-library(tidyverse)
-library(ggplot2)
-theme_set(theme_classic())
+ggplot2::theme_set(ggplot2::theme_classic())
 
 
 # Combine into single data frame and add interpolation column
@@ -432,11 +425,13 @@ theme_set(theme_classic())
 #  geom_point(aes(colour = source)) + geom_smooth(method = "lm", formula = y ~ poly(x, 2),se = FALSE)
 #tikz("iterations_chaises.tex",width=5,height=5)
 
-ggplot(graph,aes(x=x,y=y,colour=factor(source)))+
-  geom_point(data=subset(graph, source == "kerastest")) + geom_point(data=subset(graph, source=="kerastrain")) +
-  geom_point(data=subset(graph, source == "pytorchtest")) + geom_point(data=subset(graph, source=="pytorchtrain")) +
-  geom_smooth(data=subset(graph, source=="kerastest"), method='loess',formula=y~x,se=F) +
-  geom_smooth(data=subset(graph, source=="kerastrain"), method='loess',formula=y~x,se=F) +
-  geom_smooth(data=subset(graph, source=="pytorchtest"), method='loess',formula=y~x,se=F) +
-  geom_smooth(data=subset(graph, source=="pytorchtrain"), method='loess',formula=y~x,se=F) 
+ggplot2::ggplot(graph,ggplot2::aes(x=x,y=y,colour=factor(source)))+
+  ggplot2::geom_point(data=subset(graph, source == "kerastest")) + 
+  ggplot2::geom_point(data=subset(graph, source=="kerastrain")) +
+  ggplot2::geom_point(data=subset(graph, source == "pytorchtest")) + 
+  ggplot2::geom_point(data=subset(graph, source=="pytorchtrain")) +
+  ggplot2::geom_smooth(data=subset(graph, source=="kerastest"), method='loess',formula=y~x,se=F) +
+  ggplot2::geom_smooth(data=subset(graph, source=="kerastrain"), method='loess',formula=y~x,se=F) +
+  ggplot2::geom_smooth(data=subset(graph, source=="pytorchtest"), method='loess',formula=y~x,se=F) +
+  ggplot2::geom_smooth(data=subset(graph, source=="pytorchtrain"), method='loess',formula=y~x,se=F) 
 
