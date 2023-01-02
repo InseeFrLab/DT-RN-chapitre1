@@ -41,6 +41,4 @@ RUN wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Ma
     rm mambaforge.sh conda-env.yml && \ 
     mamba clean --all -f -y
 
-RUN Rscript -e "reticulate::py_install('hyperopt')"
-
 CMD ["python3"]
