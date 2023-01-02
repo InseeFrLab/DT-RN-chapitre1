@@ -20,7 +20,7 @@ RUN git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0 &
     sudo make install && \
     sudo ldconfig /usr/local/lib
 
-COPY conda-env.yaml .
+COPY conda-env.yml .
 
 # Install minimal python
 RUN wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh -O mambaforge.sh && \
