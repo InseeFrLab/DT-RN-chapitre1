@@ -22,7 +22,7 @@
 
 
 # importation des images
-meubles <- dataset_cifar100()
+meubles <- keras::dataset_cifar100()
 
 
 # On retient les chaises et les lits. La fonction get_images :
@@ -56,7 +56,7 @@ get_images <- function(categorie,ech="train"){
   }
   
   #conversion en data.frame (1 ligne par image)
-  grayscale <- data.frame(array_reshape(grayscale,dim=c(dim(grayscale)[1],32*32)))
+  grayscale <- data.frame(keras::array_reshape(grayscale,dim=c(dim(grayscale)[1],32*32)))
   #grayscale <- apply(grayscale,2,"as.integer")
   
   grayscale["type"] <-  categorie
@@ -99,7 +99,7 @@ par(mar=c(0, 0, 0, 0), xaxs='i', yaxs='i')
 atracer = df_train[df_train[,"type"]=="5",]
 
 for (i in 1:6) { 
-  img <- array_reshape(as.matrix(atracer[i,1:(ncol(atracer)-1)]),dim=c(32,32))
+  img <- keras::array_reshape(as.matrix(atracer[i,1:(ncol(atracer)-1)]),dim=c(32,32))
   image(1:32,1:32,img, col = gray((0:255)/255))
 }
 #dev.off()
@@ -114,8 +114,6 @@ for (i in 1:6) {
 #   On teste la librarie `neuralnet` sous R qui permet de réaliser des réseaux de neurones simples (des multilayers perceptrons). 
 # 
 
-library(neuralnet)
-
 # Estimation d'un premier réseau sur la totalité de l'échantillon d'entrainement :
 # 
 # * type==20 ~ : on cherche à prédire le type 20 (les chaises) par les autres variables (intensité des pixels)
@@ -129,7 +127,7 @@ library(neuralnet)
 # * lifesign : un paramètre pour obliger le programme à décrire ce qu'il fait dans la log
 
 # Binary classification
-nn=neuralnet(type=="20" ~ . ,data=df_train, hidden=20,threshold = 0.0001,err.fct="ce",act.fct="logistic",
+nn=neuralnet::neuralnet(type=="20" ~ . ,data=df_train, hidden=20,threshold = 0.0001,err.fct="ce",act.fct="logistic",
              linear.output = FALSE,likelihood = TRUE,lifesign="full")
 
 
@@ -144,7 +142,7 @@ sum(as.integer(initial == predict))/length(df_test[,"type"])
 # On cherche le nombre de neurones à utiliser dans la couche cachée. Pour cela, on va subdiviser l'échantillon d'entraînement afin de pouvoir tester les modèles évalués sur une grille de valeurs. Une évaluation par validation croisée aurait été préférable mais trop gourmande en temps de calcul.
 
 # fonction de calcul de la précision
-get_accuracy <- function(table){
+get_accuracy <- function(nn, table){
   
   Predict=predict(nn,table[,1:ncol(table)-1])
   predict <- ifelse(Predict>0.5,1,0)
@@ -172,39 +170,36 @@ print(dim(df_train_t))
 accuracy_train = c()
 accuracy_test = c()
 
+grid_hidden <- seq(5,100,50)
 
-
-for(k in seq(5,100,5)){
+for(k in grid_hidden){
   
   print(k)
   
   # évaluation du réseau de neurones
-  nn=neuralnet(type==20 ~ . ,data=df_train_e, hidden=k,threshold = 0.001,act.fct = "logistic",
+  nn=neuralnet::neuralnet(type==20 ~ . ,data=df_train_e, hidden=k,threshold = 0.001,act.fct = "logistic",
                linear.output = FALSE,likelihood = FALSE,lifesign="full")
   
   # calcul de la précision sur l'échantillon test
-  print(get_accuracy(df_train_e))
+  print(get_accuracy(nn, df_train_e))
   
-  accuracy_train <- c(accuracy_train,get_accuracy(df_train_e))
-  accuracy_test <- c(accuracy_test,get_accuracy(df_train_t))
+  accuracy_train <- c(accuracy_train,get_accuracy(nn, df_train_e))
+  accuracy_test <- c(accuracy_test,get_accuracy(nn, df_train_t))
 }
-
-
-library(ggplot2)
 
 a_list = list(accuracy_train, accuracy_test)
 a_df = do.call("rbind", lapply(a_list, 
                                function(x) data.frame(value = x, 
-                                                      count = seq(5,100,5))))
+                                                      count = grid_hidden)))
 ID_options = c("train","test")
 a_df$ID = rep(ID_options, sapply(a_list, length))
 
 #png("accuracy_neuralnet.png") 
-tikz("accuracy_neuralnet.tex",standAlone=TRUE,width=5,height=5)
+# tikz("accuracy_neuralnet.tex",standAlone=TRUE,width=5,height=5)
 
-ggplot(a_df, aes(x = count, y = value, color = ID)) + geom_point()
+ggplot2::ggplot(a_df, ggplot2::aes(x = count, y = value, color = ID)) + ggplot2::geom_point()
 
-dev.off()
+# dev.off()
 
 # Les performances du modèles sont réévaluées sur l'échantillon de test :
 accuracy_test
@@ -236,7 +231,7 @@ y <- ifelse(df_train[,"type"] == "20", 1, 0)
 
 
 # Build the model using the training set
-reg <- cv.glmnet(x, y, family = "binomial",lambda = NULL,alpha=0.3)
+reg <- glmnet::cv.glmnet(x, y, family = "binomial",lambda = NULL,alpha=0.3)
 
 # affichage du paramètre choisi
 reg$lambda.min
@@ -246,7 +241,7 @@ plot(reg)
 
 # Calcul de la précision sur l'échantillon de test 
 x.test <- model.matrix(type ~., data.frame(df_test))[,-1]
-probabilities <- reg %>% predict(newx = x.test)
+probabilities <- reg |> predict(newx = x.test)
 predicted.classes <- ifelse(probabilities > 0.5, 1, 0)
 
 observed.classes <- ifelse(df_test[,"type"]=="20",1,0)
@@ -255,7 +250,7 @@ mean(predicted.classes == observed.classes)
 # Export de la valeur des coefficients du Lasso :
 #png("coefficients_lasso.png")
 
-palette = brewer.pal(n=10,name="RdYlGn")
+palette = RColorBrewer::brewer.pal(n=10,name="RdYlGn")
 
 image(matrix(coef(reg)[2:length(coef(reg))],c(32,32)),col=rev(palette))
 title("Valeurs des coefficients")
@@ -270,22 +265,22 @@ title("Valeurs des coefficients")
 #   1. Une première version du réseau avec la librairie *Keras*
 #   Une version des programmes avec *pytorch* figure dans le notebook ().
 # ----
-library("tensorflow")
+
 # le programme crée un graph à exécuter plus tard (utile pour le calcul futur de gradient)
-tf$compat$v1$disable_eager_execution()
+tensorflow::tf$compat$v1$disable_eager_execution()
 
 # 1. on crée un réseau de neurones avec `Keras` avec 20 neurones sur la couche cachée.
-model <- keras_model_sequential()
-model %>%
+model <- keras::keras_model_sequential()
+model |>
   # couche cachée avec 20 neurones et 1024 = 32x32 valeurs en entrée (la couche d'entrée est implicite)
-  layer_dense(units = 150, activation = 'relu',input=c(1024)) %>%
+  keras::layer_dense(units = 150, activation = 'relu',input=c(1024)) |>
   # couche de sortie (2 neurones car deux choix possibles = table ou lit)
-  layer_dense(units = 2) %>%
+  keras::layer_dense(units = 2) |>
   # une activation softmax = somme des probas normalisée à 1
-  layer_activation('softmax')
+  keras::layer_activation('softmax')
 
 # Avec la librairie `Keras`, le modèle doit être compilé.
-model %>% compile(
+model |> keras::compile(
   # algorithme pour l'optimisation de la fonction de coût
   optimizer = 'adam', 
   # fonction de coût (ou de perte) : ici, le résultat attendu est binaire => entropie croisée
@@ -300,17 +295,17 @@ summary(model)
 x_train = data.matrix(df_train[,1:(ncol(df_train)-1)])
 x_test = data.matrix(df_test[,1:(ncol(df_test)-1)])
 
-y_train = to_categorical(ifelse(df_train[,"type"]=="20",1,0))
-y_test = to_categorical(ifelse(df_test[,"type"]=="20",1,0))
+y_train = keras::to_categorical(ifelse(df_train[,"type"]=="20",1,0))
+y_test = keras::to_categorical(ifelse(df_test[,"type"]=="20",1,0))
 
 # On estime le modèle :
-  history <- model %>% fit(x_train, y_train, epochs = 100, verbose = 2)
+  history <- model |> keras::fit(x_train, y_train, epochs = 100, verbose = 2)
 
 # tracé des itérations 
 plot(history)
 
 # Evaluation sur l'échantillon test :
-model %>% evaluate(x_test, y_test)
+model |> keras::evaluate(x_test, y_test)
 
 
 png("sortie_keras.png")
@@ -321,13 +316,13 @@ class_names = c("lit","chaise")
 rows <- sample(nrow(x_test))
 x_test <- x_test[rows,]
 y_test <- y_test[rows,]
-prediction <- model %>% predict(x_test)
+prediction <- model |> predict(x_test)
 
 # on affiche les résultats sur les 25 premières images
 par(mfcol=c(5,5))
 par(mar=c(0, 0, 1.5, 0), xaxs='i', yaxs='i')
 for (i in 1:25) { 
-  img <- array_reshape(x_test[i,],dim=c(32,32))
+  img <- keras::array_reshape(x_test[i,],dim=c(32,32))
   #img <- t(apply(img, 2, rev)) 
   # subtract 1 as labels go from 0 to 9
   predicted_label <- which.max(prediction[i,])-1
@@ -346,8 +341,6 @@ for (i in 1:25) {
 dev.off()
 
 
-
-
 # 2. Une adaptation de l'algorithme Grad-Cam à l'aide de la librairie Keras
 
 
@@ -361,10 +354,9 @@ summary(model)
 
 # fonction d'écriture du fichier des activations sous forme d'image
 
-write_heatmap <- function(heatmap, filename, width = 150, height = 150,
-                          bg = "white", col = palette) {
+write_heatmap <- function(heatmap, filename, width = 150, height = 150, bg = "white", col = palette) {
   
-  palette = brewer.pal(n=9,name="YlOrRd")
+  palette = RColorBrewer::brewer.pal(n=9,name="YlOrRd")
   
   png(filename, width = width, height = height, bg = bg)
   op = par(mar = c(0,0,0,0))
@@ -373,11 +365,8 @@ write_heatmap <- function(heatmap, filename, width = 150, height = 150,
   image(heatmap, axes = FALSE, asp = 1, col = col)
 }
 
-
-
-get_heatmap_mlp <- function(no_input=1,no_output){
-  library(keras)
-  K <- backend()
+get_heatmap_mlp <- function(model, x_test, no_input=1,no_output){
+  K <- keras::backend()
   
   # selection de l'image no_input dans l echantillon test
   image = matrix(x_test[no_input,],c(1,1024))
@@ -385,12 +374,13 @@ get_heatmap_mlp <- function(no_input=1,no_output){
   # selection de la couche de sortie (avant l'activation) => il s'agit d'un tenseur
   out <- model$layers[[2]]
   meuble_output <- out$output[, no_output]
+  
   # on veut la dérivée de la réponse de sortie (no_output) par rapport aux valeurs d'entrée
   grads <- K$gradients(meuble_output, model$input)[[1]]
   
   # normalisation des gradients sur la couche d'entrée
   #pooled_grads <- K$mean(grads, axis = c(0L,1L))
-  pooled_grads <- grads / ((k_sqrt(k_mean(k_square(grads)))) + 1e-5)
+  pooled_grads <- grads / ((keras::k_sqrt(keras::k_mean(keras::k_square(grads)))) + 1e-5)
   
   
   # itération sur les valeurs de l'image en entrée afin d'obtenir les valeurs numériques du gradient associé
@@ -398,7 +388,7 @@ get_heatmap_mlp <- function(no_input=1,no_output){
                           list(pooled_grads))
   
   
-  c(pooled_grads_value) %<-% iterate(list(image))
+  pooled_grads_value <- iterate(list(image))[[1]]
   
   # on effectue la multiplication (valeur x gradient)
   mult <- image
@@ -420,18 +410,18 @@ get_heatmap_mlp <- function(no_input=1,no_output){
 i=3
 
 # on calcul les predictions sur l'echantillon test 
-prediction <- model %>% predict(x_test)
+prediction <- model |> predict(x_test)
 
-grays = brewer.pal(n = 9, name = "Greys")
+grays = RColorBrewer::brewer.pal(n = 9, name = "Greys")
 write_heatmap(matrix(x_test[i,],c(32,32)),"original.png",col=rev(grays))
 #write_heatmap(imgs,"original.png",col=rev(grays))
 
-heatmap <- get_heatmap_mlp(no_input=i,no_output=1)
+heatmap <- get_heatmap_mlp(model, x_test,no_input=i,no_output=1)
 
 write_heatmap(matrix(heatmap,c(32,32)),"activations.png")
 
-image <- image_read("original.png")
-info <- image_info(image)
+image <- magick::image_read("original.png")
+info <- magick::image_info(image)
 geometry <- sprintf("%dx%d!",info$width,info$height)
 
 
@@ -445,9 +435,9 @@ if (predicted_label == true_label) {
 
 #png("chaise_zone2.png")
 
-image_read("activations.png") %>% 
-  image_resize(geometry,filter="quadratic") %>%
-  image_composite(image,operator="blend",compose_args = "30") %>% 
+magick::image_read("activations.png") |> 
+  magick::image_resize(geometry,filter="quadratic") |>
+  magick::image_composite(image,operator="blend",compose_args = "30") |> 
   plot()
 title(paste0(class_names[predicted_label+1], " (",
              class_names[true_label + 1], ")"),col.main=color)
@@ -461,20 +451,20 @@ title(paste0(class_names[predicted_label+1], " (",
 par(mfcol=c(5,5))
 par(mar=c(0, 0, 1, 0), xaxs='i', yaxs='i')
 
-prediction <- model %>% predict(x_test)
+prediction <- model |> predict(x_test)
 
 
 
 for (i in 1:25) { 
-  grays = brewer.pal(n = 9, name = "Greys")
+  grays = RColorBrewer::brewer.pal(n = 9, name = "Greys")
   write_heatmap(matrix(x_test[i,],c(32,32)),"original.png",col=rev(grays))
   
-  heatmap <- get_heatmap_mlp(no_input=i,no_output=which.max(prediction[i,]))
+  heatmap <- get_heatmap_mlp(model, x_test, no_input=i,no_output=which.max(prediction[i,]))
   
   write_heatmap(matrix(heatmap,c(32,32)),"heatmap.png")
   
-  image <- image_read("original.png")
-  info <- image_info(image)
+  image <- magick::image_read("original.png")
+  info <- magick::image_info(image)
   geometry <- sprintf("%dx%d!",info$width,info$height)
   
   
@@ -487,9 +477,9 @@ for (i in 1:25) {
   }
   
   
-  image_read("heatmap.png") %>% 
-    #image_resize(geometry,filter="quadratic") %>%
-    image_composite(image,operator="blend",compose_args = "30") %>% 
+  magick::image_read("heatmap.png") |> 
+    #image_resize(geometry,filter="quadratic") |>
+    magick::image_composite(image,operator="blend",compose_args = "30") |> 
     plot()
   title(paste0(class_names[predicted_label+1], " (",
                class_names[true_label + 1], ")"),col.main=color)
@@ -497,12 +487,12 @@ for (i in 1:25) {
 
 #dev.off()
 
-img <- array_reshape(1-x_test[1,],dim=c(32,32))
+img <- keras::array_reshape(1-x_test[1,],dim=c(32,32))
 image(1:32, 1:32, img, col = gray((0:255)/255), xaxt = 'n', yaxt = 'n',
       main = "inversion des couleurs")
 
 
-model %>% evaluate(1-x_test, y_test)
+model |> keras::evaluate(1-x_test, y_test)
 
 # 
 # ----
@@ -532,8 +522,8 @@ print(dim(df_train_t))
 x_train_e = data.matrix(df_train_e[,1:(ncol(df_train_e)-1)])
 x_train_t = data.matrix(df_train_t[,1:(ncol(df_train_t)-1)])
 
-y_train_e = to_categorical(ifelse(df_train_e[,"type"]=="20",1,0))
-y_train_t = to_categorical(ifelse(df_train_t[,"type"]=="20",1,0))
+y_train_e = keras::to_categorical(ifelse(df_train_e[,"type"]=="20",1,0))
+y_train_t = keras::to_categorical(ifelse(df_train_t[,"type"]=="20",1,0))
 
 
 # Test des paramètres sur une grille de valeurs
@@ -544,21 +534,21 @@ y_train_t = to_categorical(ifelse(df_train_t[,"type"]=="20",1,0))
 # en sortie : la précision sur les echnatillons test et entrainement
 
 objective_grille <- function(x){
-  model <- keras_model_sequential()
-  model %>%
-    layer_dense(units = x, activation = 'relu',input=c(1024)) %>%
-    layer_dense(units = 2, activation = 'softmax')
+  model <- keras::keras_model_sequential()
+  model |>
+    keras::layer_dense(units = x, activation = 'relu',input=c(1024)) |>
+    keras::layer_dense(units = 2, activation = 'softmax')
   
-  model %>% compile(
+  model |> keras::compile(
     optimizer = 'adam', 
     loss = 'categorical_crossentropy',
     metrics = c('accuracy')
   )
   
-  history <- model %>% fit(x_train_e, y_train_e, epochs = 100, verbose = 2)
-  acc_train <- model %>% evaluate(x_train_e, y_train_e)
+  history <- model |> keras::fit(x_train_e, y_train_e, epochs = 100, verbose = 2)
+  acc_train <- model |> keras::evaluate(x_train_e, y_train_e)
   
-  results <- model %>% evaluate(x_train_t, y_train_t)
+  results <- model |> keras::evaluate(x_train_t, y_train_t)
   return(list(results$accuracy,acc_train$accuracy))
 }
 
@@ -567,7 +557,9 @@ objective_grille <- function(x){
 acc_test = c()
 acc_train = c()
 
-for(p in seq(10,200,10)){
+grid_param <- seq(10,200,10)
+
+for(p in grid_param){
   
   acc = objective_grille(p)
   print(paste(p,acc,sep=":"))
@@ -579,30 +571,24 @@ for(p in seq(10,200,10)){
   acc_train = c(acc_train,acc[2])
 }
 
-library("tikzDevice")
-
-graph <- data.frame(cbind(c(rep("train",20),rep("test",20)),c(seq(10,200,10),seq(10,200,10)),c(unlist(acc_test),unlist(acc_train))))
+graph <- data.frame(cbind(c(rep("train",20),rep("test",20)),rep(grid_param,2),c(unlist(acc_test),unlist(acc_train))))
 colnames(graph) <- c("source","x","y")
 graph[,2:ncol(graph)] <- apply(graph[,2:ncol(graph)],2,"as.numeric")
 
 
-
-library(tidyverse)
-library(ggplot2)
-theme_set(theme_classic())
+ggplot2::theme_set(ggplot2::theme_classic())
 
 
 # Combine into single data frame and add interpolation column
 #ggplot(graph, aes(x, y)) +
 #  geom_point(aes(colour = source)) + geom_smooth(method = "lm", formula = y ~ poly(x, 2),se = FALSE)
-tikz("iterations_chaises.tex",width=5,height=5)
 
-ggplot(graph,aes(x=x,y=y,colour=factor(source)))+
-  geom_point(data=subset(graph, source == "train")) + geom_point(data=subset(graph, source=="test")) +
-  geom_smooth(data=subset(graph, source=="train"), method='loess',formula=y~x,se=F) +
-  geom_smooth(data=subset(graph, source=="test"), method='loess',formula=y~x,se=F)
+ggplot2::ggplot(graph, ggplot2::aes(x=x,y=y,colour=factor(source)))+
+  ggplot2::geom_point(data=subset(graph, source == "train")) + 
+  ggplot2::geom_point(data=subset(graph, source=="test")) +
+  ggplot2::geom_smooth(data=subset(graph, source=="train"), method='loess',formula=y~x,se=F) +
+  ggplot2::geom_smooth(data=subset(graph, source=="test"), method='loess',formula=y~x,se=F)
 
-dev.off()
 
 
 # Test du package `hyperopt` sous R => `hopticulate`
@@ -610,7 +596,7 @@ dev.off()
 
 # chargement des packages
 library(reticulate)
-#remotes::install_github("njnmco/hopticulate",force=TRUE)
+remotes::install_github("njnmco/hopticulate",force=TRUE)
 #reticulate::py_install("hyperopt")
 library(hopticulate)
 
@@ -620,28 +606,27 @@ library(hopticulate)
 # = le pramatre x est le nombre de neurones de la couche cachée
 # la sortie est le nombre de mal classées = objectif à minimiser
 objective <- function(x){
-  model <- keras_model_sequential()
-  model %>%
-    layer_dense(units = x, activation = 'relu',input=c(1024)) %>%
-    #layer_dense(units = 10, activation = 'relu') %>%
-    layer_dense(units = 2, activation = 'softmax')
+  model <- keras::keras_model_sequential()
+  model |>
+    keras::layer_dense(units = x, activation = 'relu',input=c(1024)) |>
+    keras::layer_dense(units = 2, activation = 'softmax')
   
-  model %>% compile(
+  model |> keras::compile(
     optimizer = 'adam', 
     loss = 'categorical_crossentropy',
     metrics = c('accuracy')
   )
   
-  history <- model %>% fit(x_train_e, y_train_e, epochs = 5, verbose = 2)
+  history <- model |> keras::fit(x_train_e, y_train_e, epochs = 5, verbose = 2)
   
-  results <- model %>% evaluate(x_train_t, y_train_t)
+  results <- model |> keras::evaluate(x_train_t, y_train_t)
   return(1-results$accuracy)
 }
 
 # Define a search space.
-space = hp.quniform("x", 10, 200, 10)
+space = hopticulate::hp.quniform("x", 10, 200, 10)
 # recherche du meilleur paramètre
-best = fmin(objective, space, algo=tpe.suggest, max_evals=15,verbose=1)
+best = hopticulate::fmin(objective, space, algo=hopticulate::tpe.suggest, max_evals=15,verbose=1)
 
 
 print(best)
