@@ -12,7 +12,7 @@ L'ensemble du codes sources utilisés dans ce chapitre est accompagné de son [i
 Celle-ci peut être utilisée pour vous éviter de télécharger les dépendances nécessaires à ce chapitre. Vous pouvez la récupérer avec la commande suivante :
 
 ```
-docker pull thomasfaria/dt-rn-chapitre1
+docker pull thomasfaria/dt-rn-chapitre1:latest
 ```
 
 Nous vous recommendons fortement l'utilisation d'[Onyxia](https://github.com/InseeFrLab/onyxia-web), la plateforme *datascience* développé par l'[Insee](https://www.insee.fr/fr/accueil)). Pour ce faire vous pouvez suivre ces étapes :
