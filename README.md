@@ -38,4 +38,4 @@ Le script [neural_network_cifar100_pytorch.R](https://github.com/ThomasFaria/DT-
 
 Le script [Un_premier_convnet.R](https://github.com/ThomasFaria/DT-RN-chapitre1/blob/main/R/Un_premier_convnet.R) effectue la classification des chaises et des tables de la base **CIFAR100** à l'aide d'un **convnet**. Cet exemple est à relier au chapitre 3 sur les parcelles cadastrales.
 
-Les codes ont été écrits par Stéphanie Himpens (Insee / Banque de France).
+Les codes ont été écrits par [Stéphanie Himpens](https://github.com/srhimp) (Insee / Banque de France).
