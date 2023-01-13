@@ -28,12 +28,14 @@ Tous les packages ont déjà été installés dans l'image docker et les dépend
 
 *Les programmes sont en **R***
 
-Le notebook principal neural_network_cifar100.ipynb contient le déroulé intégral de l'exemple de classification de meubles (chaises et tables) sur la base d'images *CIFAR100* c'est-à-dire :
+Le script principal [neural_network_cifar100.R](https://github.com/ThomasFaria/DT-RN-chapitre1/blob/main/R/neural_network_cifar100.R) contient le déroulé intégral de l'exemple de classification de meubles (chaises et tables) sur la base d'images *CIFAR100* c'est-à-dire :
 1. L'import des images à utiliser
 2. Un premier exemple de réseau de neurones avec la librairie **neuralnet**
 3. Une classification par une régression pénalisée (Lasso)
 4. Un réseau de neurones plus élaboré avec la librairie **Keras**
 
-Le notebook neural_network_cifar100_pytorch.ipynb le réseau de neurones du 4. précédent programmé avec **torch**
+Le script [neural_network_cifar100_pytorch.R](https://github.com/ThomasFaria/DT-RN-chapitre1/blob/main/R/neural_network_cifar100_pytorch.R) le réseau de neurones du 4. précédent programmé avec **torch**
 
-Le notebook Un_premier_convnet.ipynb effectue la classification des chaises et des tables de la base **CIFAR100** à l'aide d'un **convnet**. Cet exemple est à relier au chapitre 3 sur les parcelles cadastrales.
+Le script [Un_premier_convnet.R](https://github.com/ThomasFaria/DT-RN-chapitre1/blob/main/R/Un_premier_convnet.R) effectue la classification des chaises et des tables de la base **CIFAR100** à l'aide d'un **convnet**. Cet exemple est à relier au chapitre 3 sur les parcelles cadastrales.
+
+Les codes ont été écrits par Stéphanie Himpens (Insee / Banque de France).
