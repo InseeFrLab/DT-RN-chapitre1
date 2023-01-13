@@ -1,6 +1,6 @@
 # Chapitre 1 : Apprentissage algorithmique (*Machine learning*) et réseaux de neurones, concepts et prise en main
 
-[![Onyxia](https://img.shields.io/badge/Launch-Datalab-orange?logo=R)](https://datalab.sspcloud.fr/launcher/ide/rstudio?autoLaunch=true&onyxia.friendlyName=«dt-chap1»&security.allowlist.enabled=false&service.image.custom.enabled=true&service.image.pullPolicy=«Always»&service.image.custom.version=«thomasfaria%2Fdt-rn-chapitre1»)
+[![Onyxia](https://img.shields.io/badge/Launch-Datalab-orange?logo=R)](https://datalab.sspcloud.fr/launcher/ide/rstudio?autoLaunch=false&onyxia.friendlyName=%C2%ABdt-rn-chapitre1%C2%BB&security.allowlist.enabled=false&service.image.custom.enabled=true&service.image.pullPolicy=%C2%ABAlways%C2%BB&service.image.custom.version=%C2%ABthomasfaria%2Fdt-rn-chapitre1%3Alatest%C2%BB)
 [![Build](https://img.shields.io/github/actions/workflow/status/ThomasFaria/DT-RN-chapitre1/build-image.yaml?label=Build
 )](https://hub.docker.com/repository/docker/thomasfaria/dt-rn-chapitre1)
 
