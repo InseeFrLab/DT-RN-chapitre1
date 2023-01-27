@@ -1,24 +1,24 @@
 # Chapitre 1 : Apprentissage algorithmique (*Machine learning*) et réseaux de neurones, concepts et prise en main
 
-[![Onyxia](https://img.shields.io/badge/Launch-Datalab-orange?logo=R)](https://datalab.sspcloud.fr/launcher/ide/rstudio?autoLaunch=false&onyxia.friendlyName=%C2%ABdt-rn-chapitre1%C2%BB&security.allowlist.enabled=false&service.image.custom.enabled=true&service.image.pullPolicy=%C2%ABAlways%C2%BB&service.image.custom.version=%C2%ABthomasfaria%2Fdt-rn-chapitre1%3Alatest%C2%BB)
+[![Onyxia](https://img.shields.io/badge/Launch-Datalab-orange?logo=R)](https://datalab.sspcloud.fr/launcher/ide/rstudio?autoLaunch=false&onyxia.friendlyName=%C2%ABdt-rn-chapitre1%C2%BB&security.allowlist.enabled=false&service.image.custom.enabled=true&service.image.pullPolicy=%C2%ABAlways%C2%BB&service.image.custom.version=%C2%ABinseefrlab%2Fdt-rn-chapitre1%3Alatest%C2%BB)
 [![Build](https://img.shields.io/github/actions/workflow/status/ThomasFaria/DT-RN-chapitre1/build-image.yaml?label=Build
-)](https://hub.docker.com/repository/docker/thomasfaria/dt-rn-chapitre1)
+)](https://hub.docker.com/repository/docker/inseefrlab/dt-rn-chapitre1)
 
 Le répertoire contient l'ensemble des programmes du chapitre 1.
 
 ## Prise en main
-L'ensemble du codes sources utilisés dans ce chapitre est accompagné de son [image docker](https://hub.docker.com/repository/docker/thomasfaria/dt-rn-chapitre1) pour assurer une totale reproductibilité des résultats.
+L'ensemble du codes sources utilisés dans ce chapitre est accompagné de son [image docker](https://hub.docker.com/repository/docker/inseefrlab/dt-rn-chapitre1) pour assurer une totale reproductibilité des résultats.
 
 Celle-ci peut être utilisée pour vous éviter de télécharger les dépendances nécessaires à ce chapitre. Vous pouvez la récupérer avec la commande suivante :
 
 ```
-docker pull thomasfaria/dt-rn-chapitre1:latest
+docker pull inseefrlab/dt-rn-chapitre1:latest
 ```
 
 Nous vous recommendons fortement l'utilisation d'[Onyxia](https://github.com/InseeFrLab/onyxia-web), la plateforme *datascience* développé par l'[Insee](https://www.insee.fr/fr/accueil)). Pour ce faire vous pouvez suivre ces étapes :
 
 - Etape 0: Allez sur [https://datalab.sspcloud.fr/home](https://datalab.sspcloud.fr/home). Cliquer sur **Sign In** et ensuite **create an account** avec votre adresse email institutionnelle ou académique.
-- Etape 1: Cliquez [ICI](https://datalab.sspcloud.fr/launcher/ide/rstudio?autoLaunch=true&onyxia.friendlyName=«dt-chap4»&security.allowlist.enabled=false&service.image.custom.enabled=true&service.image.pullPolicy=«Always»&service.image.custom.version=«thomasfaria%2Fdt-rn-chapitre4») ou sur le badge orange en haut de la page pour lancer un service.
+- Etape 1: Cliquez [ICI](https://datalab.sspcloud.fr/launcher/ide/rstudio?autoLaunch=true&onyxia.friendlyName=«dt-chap4»&security.allowlist.enabled=false&service.image.custom.enabled=true&service.image.pullPolicy=«Always»&service.image.custom.version=«inseefrlab%2Fdt-rn-chapitre4») ou sur le badge orange en haut de la page pour lancer un service.
 - Etape 2: **Ouvrez** le service et suivez les instructions affichées concernant l'**identifiant** et le **mot de passe**.
 - Etape 3: **Créez un nouveau projet** et **clonez** le code grâce à la commande suivant : ```git clone https://github.com/ThomasFaria/DT-RN-chapitre1.git```.
 
